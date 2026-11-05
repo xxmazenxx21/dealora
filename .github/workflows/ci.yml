@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Dummy values: nothing in this job connects to a database.
+      DATABASE_URL: postgresql://dealora:dummy@localhost:5433/dealora
+      JWT_SECRET: ci-dummy-secret
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      # `npm run lint` uses --fix, which would hide fixable errors in CI.
+      - name: Lint
+        run: npx eslint "{src,apps,libs}/**/*.ts"
+      - run: npm run build
